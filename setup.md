@@ -24,22 +24,20 @@ Welcome to the **HDB Resale Price Prediction & Streamlit Deployment** project! F
 ### Step 1: Open the VS Code terminal
 Press ``Ctrl + ` `` (backtick) on Windows or ``Cmd + ` `` on Mac.
 
-### Step 2: Create and activate a conda environment
-Include `python=3.12` so the environment has its own Python. Without it, `pip` installs packages into a different environment.
+### Step 2: Create the lesson environment
+`environment.yml` describes the environment: Python 3.12 plus every package in `requirements-dev.txt`. This includes everything in `requirements.txt` (pandas, scikit-learn, Streamlit, ...) and the notebook tools. Versions are pinned so your model loads correctly on Streamlit Cloud later.
 
 ```bash
-conda create --name hdb_project python=3.12 -y
+conda env create -f environment.yml
 conda activate hdb_project
 ```
 
 Your terminal prompt should now start with `(hdb_project)`.
 
-### Step 3: Install the libraries
+### Step 3: Register the environment as a notebook kernel (one-time)
 ```bash
-pip install -r requirements-dev.txt
+python -m ipykernel install --user --name hdb_project --display-name "Python (hdb_project)"
 ```
-
-This installs everything in `requirements.txt` (pandas, scikit-learn, Streamlit, ...) plus the notebook tools. Versions are pinned so your model loads correctly on Streamlit Cloud later.
 
 ---
 
@@ -47,7 +45,7 @@ This installs everything in `requirements.txt` (pandas, scikit-learn, Streamlit,
 
 ### Step 1: Work through the notebook
 1. Open `hdb_price_model.ipynb` in VS Code.
-2. Click **Select Kernel** (top right) and choose the `hdb_project` environment.
+2. Click **Select Kernel** (top right), then **Jupyter Kernel** > **Python (hdb_project)**. You can also pick **Python Environments** > **hdb_project**.
 3. Run the cells from top to bottom (**Run All** or `Shift + Enter` cell by cell). Read the explanations and discuss the questions.
 
 The notebook takes about 1 to 2 minutes to run fully. Cross-validating the tree models is the slowest part.
@@ -111,7 +109,8 @@ You now have a public URL you can share!
 
 | Problem | Fix |
 |---|---|
-| `ModuleNotFoundError: No module named 'sklearn'` | Activate the environment (`conda activate hdb_project`) and rerun `pip install -r requirements-dev.txt`. In the notebook, check the selected kernel is `hdb_project`. |
+| `ModuleNotFoundError: No module named 'sklearn'` | Activate the environment (`conda activate hdb_project`). In the notebook, check the selected kernel is **Python (hdb_project)**. If packages are still missing, run `conda env update -f environment.yml --prune`. |
+| `CondaValueError: prefix already exists` | The environment already exists. Run `conda activate hdb_project`, or remove it with `conda env remove -n hdb_project` and create it again. |
 | App says **"No trained model found"** | Run `python model.py` first. On Streamlit Cloud, check `models/hdb_price_model.joblib` and `models/model_card.json` were pushed to GitHub. |
 | Errors or warnings about scikit-learn versions when loading the model | The app is using a different scikit-learn version from the one you trained with. Keep the versions in `requirements.txt` pinned, then retrain and push. |
 | You changed the features in `hdb_features.py` | Retrain with `python model.py`, update the inputs in `app.py`, then commit and push again. |

@@ -1,0 +1,10 @@
+# Conda environment for the HDB price predictor lesson.
+# Create it with:  conda env create -f environment.yml
+name: hdb_project
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -r requirements-dev.txt
