@@ -27,8 +27,38 @@ You will train and compare three regression models, **Linear Regression**, **Ran
 │   └── model_card.json        # Scores for every model + metadata the app uses
 ├── requirements.txt           # Packages for training and the app (used by Streamlit Cloud)
 ├── requirements-dev.txt       # Adds notebook tools (matplotlib, seaborn, ipykernel)
+├── environment.yml            # Conda environment for the lesson (Python 3.12 + requirements-dev.txt)
 └── setup.md                   # Step-by-step setup and deployment guide
 ```
+
+## Environment setup
+
+You need [Miniconda](https://docs.anaconda.com/miniconda/) or Anaconda. From the project folder, run:
+
+```bash
+# 1. Create the lesson environment (Python 3.12 + pinned packages). Takes a few minutes.
+conda env create -f environment.yml
+
+# 2. Activate it. Your prompt should now start with (hdb_project).
+conda activate hdb_project
+
+# 3. Register it as a Jupyter kernel (one-time).
+python -m ipykernel install --user --name hdb_project --display-name "Python (hdb_project)"
+```
+
+Then choose the kernel in the notebook:
+
+- **VS Code:** open `hdb_price_model.ipynb`, click **Select Kernel** (top right), then **Jupyter Kernel** > **Python (hdb_project)**. You can also pick **Python Environments** > **hdb_project**.
+- **Jupyter Lab / Notebook:** **Kernel** > **Change Kernel** > **Python (hdb_project)**.
+
+Check that it worked:
+
+```bash
+python -c "import sys, sklearn; print(sys.version.split()[0], sklearn.__version__)"
+# 3.12.x 1.9.1
+```
+
+If `requirements.txt` or `requirements-dev.txt` changes later, update the environment with `conda env update -f environment.yml --prune`. To start again from scratch, run `conda env remove -n hdb_project` and repeat step 1.
 
 ## Workflow
 
