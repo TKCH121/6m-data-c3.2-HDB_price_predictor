@@ -1,80 +1,117 @@
 # Project Setup & Execution Guide
 
-Welcome to the **House Price Prediction & Streamlit Deployment** project! Follow these step-by-step instructions to get the code running locally on your computer using VS Code, and prepare it for cloud deployment.
+Welcome to the **HDB Resale Price Prediction & Streamlit Deployment** project! Follow these steps to run the code locally in VS Code and deploy your app to the cloud.
 
 ---
 
 ## Phase 1: Fork & Clone the Project
 
-Before running code, you need to create your own personal copy of the project on GitHub and download it to your computer.
-
-### Step 1: Fork the Repository
-1. Open your web browser and go to: https://github.com/rabiyakulsum/HDB_price_predictor
-
+### Step 1: Fork the repository
+1. Sign in to GitHub and go to: https://github.com/flexfengfeng/6m-data-c3.2-HDB_price_predictor
+2. Click **Fork** (top right), then **Create fork**. You now have your own copy at `https://github.com/<your-username>/6m-data-c3.2-HDB_price_predictor`.
 
 ### Step 2: Clone to VS Code
-1. On your new forked repository page, click the green **Code** button and copy the secure HTTPS URL provided.
-2. Open **VS Code** on your computer.
-3. Open the command palette (`Ctrl + Shift + P` on Windows or `Cmd + Shift + P` on Mac) and type `Git: Clone`, then press Enter.
-4. Paste the URL you copied and choose a folder on your computer to save the project.
-5. When prompted by VS Code, click **Open Repository**.
+1. On **your fork's** page, click the green **Code** button and copy the HTTPS URL.
+2. Open **VS Code**.
+3. Open the command palette (`Ctrl + Shift + P` on Windows, `Cmd + Shift + P` on Mac), type `Git: Clone`, and press Enter.
+4. Paste the URL and choose a folder to save the project in.
+5. When VS Code asks, click **Open**.
 
 ---
 
-## Phase 2: Running the Project Locally
+## Phase 2: Set Up Your Python Environment
 
-Now, let's open the terminal inside VS Code and run the files in the correct chronological order.
+### Step 1: Open the VS Code terminal
+Press ``Ctrl + ` `` (backtick) on Windows or ``Cmd + ` `` on Mac.
 
-### Step 1: Open the VS Code Terminal
-* Press **`Ctrl + \``** (backtick) on Windows or **`Cmd + \``** on a Mac to open the built-in terminal at the bottom of your screen.
+### Step 2: Create and activate a conda environment
+Include `python=3.12` so the environment has its own Python. Without it, `pip` installs packages into a different environment.
 
-### Step 2: Install Required Libraries
-Create a virtual environment
+```bash
+conda create --name hdb_project python=3.12 -y
+conda activate hdb_project
+```
 
-  ```bash
-  conda create --name hdb_project
-  ```
-Activate the environment
+Your terminal prompt should now start with `(hdb_project)`.
 
-  ```bash
-  conda activate hdb_project
-  ```
-We must install the exact Python tools our code relies on. Run the following command based on your computer's operating system:
+### Step 3: Install the libraries
+```bash
+pip install -r requirements-dev.txt
+```
 
-  ```bash
-  pip install -r requirements.txt
-  ```
+This installs everything in `requirements.txt` (pandas, scikit-learn, Streamlit, ...) plus the notebook tools. Versions are pinned so your model loads correctly on Streamlit Cloud later.
 
-### Step 3: Run model.py to train the model
-
-Run the following command to train your model and generate the pickle file:
-
-  ```bash
-  python model.py
-  ```
-  
-### Step 4: Run the app.py to launch the Web app
-
-Run the below command
-
-  ```bash
-  streamlit run app.py
-  ```
 ---
 
-## Phase 3: Deploy on Streamlit
+## Phase 3: Build and Compare the Models
 
-1. Open your web browser, go to [share.streamlit.io](https://share.streamlit.io), and click **"Continue with GitHub"**.
-2. Once logged in, click the **Create app** button located in the top-right corner of your workspace.
-3. On the deployment configuration page, fill in the fields using the dropdown menus:
-   * **Repository:** Select your personal fork (e.g., `your-username/House-price-prediction`).
-   * **Branch:** Leave this set to `main` (or `master`).
-   * **Main file path:** Change or verify that this points exactly to `app.py`.
-4. Click the blue **Deploy!** button at the bottom of the form.
+### Step 1: Work through the notebook
+1. Open `hdb_price_model.ipynb` in VS Code.
+2. Click **Select Kernel** (top right) and choose the `hdb_project` environment.
+3. Run the cells from top to bottom (**Run All** or `Shift + Enter` cell by cell). Read the explanations and discuss the questions.
 
+The notebook takes about 1 to 2 minutes to run fully. Cross-validating the tree models is the slowest part.
 
+### Step 2: Train the final model
+```bash
+python model.py
+```
 
+This trains all three models, prints a comparison table, and saves the best model:
 
+```
+Chosen model: Gradient Boosting (lowest cross-validated RMSE)
+Saved models/hdb_price_model.joblib (0.7 MB) and models/model_card.json
+```
 
+---
 
+## Phase 4: Run the Web App Locally
 
+```bash
+streamlit run app.py
+```
+
+Your browser opens at http://localhost:8501. Try:
+- The **Predict a price** tab: pick a town, flat type, size, storey and lease year, then click **Predict resale price**.
+- The **Model comparison** tab: see how the three models scored.
+
+Press `Ctrl + C` in the terminal to stop the app.
+
+---
+
+## Phase 5: Push Your Changes to GitHub
+
+Streamlit Cloud runs the code and model **from your GitHub repo**, so commit the trained model files too:
+
+```bash
+git add .
+git commit -m "Train HDB price model"
+git push
+```
+
+---
+
+## Phase 6: Deploy on Streamlit Community Cloud
+
+1. Go to [share.streamlit.io](https://share.streamlit.io) and click **Continue with GitHub**.
+2. Click **Create app** (top right), then choose to deploy from a GitHub repo.
+3. Fill in:
+   * **Repository:** your fork, e.g. `<your-username>/6m-data-c3.2-HDB_price_predictor`
+   * **Branch:** `main`
+   * **Main file path:** `app.py`
+4. Open **Advanced settings** and set **Python version** to **3.12** (the same version you trained with).
+5. Click **Deploy**. The first build takes a few minutes while packages install from `requirements.txt`.
+
+You now have a public URL you can share!
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `ModuleNotFoundError: No module named 'sklearn'` | Activate the environment (`conda activate hdb_project`) and rerun `pip install -r requirements-dev.txt`. In the notebook, check the selected kernel is `hdb_project`. |
+| App says **"No trained model found"** | Run `python model.py` first. On Streamlit Cloud, check `models/hdb_price_model.joblib` and `models/model_card.json` were pushed to GitHub. |
+| Errors or warnings about scikit-learn versions when loading the model | The app is using a different scikit-learn version from the one you trained with. Keep the versions in `requirements.txt` pinned, then retrain and push. |
+| You changed the features in `hdb_features.py` | Retrain with `python model.py`, update the inputs in `app.py`, then commit and push again. |

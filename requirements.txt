@@ -1,4 +1,9 @@
-pandas
-scikit-learn
-streamlit
-numpy
+# Packages needed to train the model and run the Streamlit app.
+# Versions are pinned: a model saved with one scikit-learn version may fail
+# to load (or predict differently) under another, so the app on Streamlit
+# Cloud must use the same versions you trained with.
+pandas==3.0.6
+numpy==2.5.3
+scikit-learn==1.9.1
+joblib==1.6.0
+streamlit==1.64.0

@@ -1,0 +1,6 @@
+# Everything in requirements.txt, plus tools for the teaching notebook.
+# Install locally with: pip install -r requirements-dev.txt
+-r requirements.txt
+matplotlib==3.11.2
+seaborn==0.13.2
+ipykernel==7.4.0

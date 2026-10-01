@@ -1,43 +1,133 @@
-import numpy as np
-import pickle
+"""Streamlit web app for the HDB resale price model.
+
+Run locally with:  streamlit run app.py
+Train the model first with:  python model.py
+"""
+
+import json
+from pathlib import Path
+
+import joblib
+import pandas as pd
 import streamlit as st
 
-# 1. Load our trained HDB prediction brain
-with open("house_model.pkl", "rb") as f:
-    model = pickle.load(f)
+from hdb_features import FEATURES
 
-# 2. Design the localized App Interface
+MODEL_DIR = Path(__file__).parent / "models"
+MODEL_PATH = MODEL_DIR / "hdb_price_model.joblib"
+CARD_PATH = MODEL_DIR / "model_card.json"
+
+st.set_page_config(page_title="HDB Resale Price Predictor", page_icon="🏡")
+
+
+# Cache so the model loads once, not on every click.
+@st.cache_resource
+def load_model():
+    return joblib.load(MODEL_PATH)
+
+
+@st.cache_data
+def load_card():
+    return json.loads(CARD_PATH.read_text())
+
+
+if not MODEL_PATH.exists() or not CARD_PATH.exists():
+    st.error("No trained model found. Run `python model.py` first, then reload this page.")
+    st.stop()
+
+model = load_model()
+card = load_card()
+ranges = card["numeric_ranges"]
+best = card["best_model"]
+best_results = card["results"][best]
+
 st.title("🏡 Singapore HDB Resale Price Predictor")
 st.write(
-    "Input the flat's structural attributes below to calculate its estimated market value."
+    f"Estimate an HDB flat's resale price using a **{best}** model trained on "
+    f"{card['data']['rows']:,} resale transactions "
+    f"({card['data']['first_month']} to {card['data']['last_month']})."
 )
 
-# 3. Create input parameters matching local HDB profiles
-sqm = st.slider(
-    "Floor Area (Square Metres - sqm)",
-    min_value=30,
-    max_value=160,
-    value=90,
-    step=1,
-)
-lease_year = st.slider(
-    "Lease Commencement Year",
-    min_value=1970,
-    max_value=2025,
-    value=2000,
-    step=1,
-)
-floor = st.slider(
-    "Floor Level (Storey)", min_value=1, max_value=50, value=5, step=1
-)
+predict_tab, compare_tab = st.tabs(["Predict a price", "Model comparison"])
 
-# 4. Perform calculation on submission
-if st.button("Predict Resale Price"):
-    # Format user parameters to match training data positions
-    input_data = np.array([[sqm, lease_year, floor]])
+with predict_tab:
+    with st.form("flat_details"):
+        col1, col2 = st.columns(2)
+        with col1:
+            town = st.selectbox("Town", card["categories"]["town"])
+            flat_type = st.selectbox(
+                "Flat type",
+                card["categories"]["flat_type"],
+                index=card["categories"]["flat_type"].index("4 ROOM"),
+            )
+            storey = st.slider("Storey (floor level)", min_value=1, max_value=51, value=8)
+        with col2:
+            floor_area = st.slider(
+                "Floor area (sqm)",
+                min_value=int(ranges["floor_area_sqm"]["min"]),
+                max_value=int(ranges["floor_area_sqm"]["max"]),
+                value=int(ranges["floor_area_sqm"]["median"]),
+            )
+            lease_year = st.slider(
+                "Lease commencement year",
+                min_value=int(ranges["lease_commence_date"]["min"]),
+                max_value=int(ranges["lease_commence_date"]["max"]),
+                value=int(ranges["lease_commence_date"]["median"]),
+            )
+        submitted = st.form_submit_button("Predict resale price", type="primary")
 
-    # Generate calculation
-    prediction = model.predict(input_data)[0]
+    if submitted:
+        # Column names and order must match the training data exactly.
+        flat = pd.DataFrame(
+            [[town, flat_type, floor_area, storey, lease_year]], columns=FEATURES
+        )
+        price = model.predict(flat)[0]
+        typical_error = best_results["test_mae"]
 
-    # Display localized output
-    st.success(f"🇸🇬 Estimated Resale Price: S${prediction:,.2f}")
+        st.success(f"Estimated resale price: **S${price:,.0f}**")
+        st.caption(
+            f"On unseen test data this model was off by about S${typical_error:,.0f} "
+            f"on average (MAE), so a realistic range is roughly "
+            f"S${price - typical_error:,.0f} to S${price + typical_error:,.0f}."
+        )
+        st.info(
+            f"Prices reflect the {card['data']['first_month']} to "
+            f"{card['data']['last_month']} market, not today's prices."
+        )
+
+with compare_tab:
+    st.write(
+        "Three models were trained on the same data. The deployed model was "
+        f"chosen by **{card['selection_rule']}**."
+    )
+    table = pd.DataFrame.from_dict(card["results"], orient="index").rename(
+        columns={
+            "cv_rmse": "CV RMSE (S$)",
+            "cv_mae": "CV MAE (S$)",
+            "cv_r2": "CV R²",
+            "test_rmse": "Test RMSE (S$)",
+            "test_mae": "Test MAE (S$)",
+            "test_r2": "Test R²",
+            "fit_seconds": "Train time (s)",
+            "chosen": "Deployed",
+        }
+    )
+    st.dataframe(
+        table.style.format(
+            {
+                "CV RMSE (S$)": "{:,.0f}",
+                "CV MAE (S$)": "{:,.0f}",
+                "CV R²": "{:.3f}",
+                "Test RMSE (S$)": "{:,.0f}",
+                "Test MAE (S$)": "{:,.0f}",
+                "Test R²": "{:.3f}",
+                "Train time (s)": "{:.1f}",
+            }
+        )
+    )
+    st.write("**Test MAE by model** (lower is better)")
+    st.bar_chart(table["Test MAE (S$)"], horizontal=True, x_label="S$", y_label="")
+    st.caption(
+        "RMSE punishes large errors more than MAE. R² is the share of price "
+        "variation the model explains (1.0 = perfect)."
+    )
