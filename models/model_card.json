@@ -3,23 +3,23 @@
   "selection_rule": "lowest 5-fold cross-validated RMSE on the training set",
   "results": {
     "Linear Regression": {
-      "cv_rmse": 60245.24664713755,
-      "cv_mae": 46370.582798259114,
-      "cv_r2": 0.8464896676144618,
-      "test_rmse": 60520.803872068565,
-      "test_mae": 46725.99555218112,
-      "test_r2": 0.8477098348738987,
-      "fit_seconds": 0.12,
+      "cv_rmse": 60245.25873442481,
+      "cv_mae": 46370.568592347256,
+      "cv_r2": 0.8464896055327038,
+      "test_rmse": 60520.80645528661,
+      "test_mae": 46726.03104572634,
+      "test_r2": 0.847709821873453,
+      "fit_seconds": 0.08,
       "chosen": false
     },
     "Random Forest": {
       "cv_rmse": 36661.41747867148,
       "cv_mae": 25628.64452463354,
       "cv_r2": 0.9431235923231229,
-      "test_rmse": 35624.23144627356,
-      "test_mae": 25096.328574429725,
+      "test_rmse": 35624.23144627355,
+      "test_mae": 25096.32857442972,
       "test_r2": 0.9472340831105445,
-      "fit_seconds": 6.51,
+      "fit_seconds": 2.82,
       "chosen": false
     },
     "Gradient Boosting": {
@@ -29,7 +29,7 @@
       "test_rmse": 35813.67933321934,
       "test_mae": 26191.542214473622,
       "test_r2": 0.9466713778278606,
-      "fit_seconds": 13.48,
+      "fit_seconds": 10.03,
       "chosen": true
     }
   },
